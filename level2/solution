@@ -1,0 +1,27 @@
+on trouve sur le home du level2 un binaire level2
+
+en le desassemblant avec gdb on voit que le main appelle la fonction p
+
+et que dans la fonction p il y a la fonction get, on peurra donc effectuer un buffer overflow comme dans le level1
+
+mais on ne pourra pas lui dire de pointer vers une autre fonction du programme car celui ci ne contient pas de execve
+il faudra donc lui injecter notre propre code
+
+on trouve sur http://shell-storm.org/shellcode/files/shellcode-219.php un binaire d'injection de code dans gets
+
+on va donc ecrire ce code en entrée et mettre l'addresse du debut du code a partir du 80eme charactere pour que l'on jump a l'execution de notre code après l'appel a gets
+
+la structure du fichier va etre donc "lecode" + "buffer pour atteindre 80char" + "adresse du debut de l'input"
+
+il faut donc qu'on trouve l'adresse du debut de l'input une fois qu'il est copié dans la stack (grace a strdup)
+on va donc dans gdb, on met un breakpoint après l'appel a strdup et on regarde l'adresse avec x $eax
+
+on entre d'abord dans un fichier le code a injecter, on fait ls -l pour connaitre sa longueur
+on trouve qu'il fait 56 char de long, donc 55 avec le \n en fin de fichier
+on ajoute donc 25 char pour arriver a 80 et on entre l'adresse qu'on a trouver précédement
+
+`python -c 'print "\x31\xc0\x31\xdb\xb0\x06\xcd\x80\x53\x68/tty\x68/dev\x89\xe3\x31\xc9\x66\xb9\x12\x27\xb0\x05\xcd\x80\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80"' > /tmp/test`
+
+on fait comme dans le level1 `cat /tmp/test - | ./level2`
+et après un cat /user/home/level3/.pass on trouve le flag en recherché
+

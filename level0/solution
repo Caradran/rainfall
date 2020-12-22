@@ -1,0 +1,12 @@
+on trouve un binaire dans le home du level0
+
+lorsqu'on le lance sans arguments il segault et avec il ecrit "No !"
+
+on dessassemble le binaire avec gdb
+
+on trouve qu'il fait une comparaison entre l'argument qu'on envoit qu'il a fait passer par atoi et 0x1a7
+
+0x1a7 vaut 423
+
+en lançant le binair avec 423 en argument le binaire ouvre un shell, on peut acceder au home du level1 et au flag dans ce binaire
+

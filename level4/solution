@@ -1,0 +1,25 @@
+sur le home du level4 on trouve un binaire level4
+
+en le desassemblant avec gdb on voit qu'il a un main qui appelle la fonction n
+
+la function n fait un appelle a fgets et envoit ce qu'elle reçoit a la fonction p qui fait juste un printf
+ensuite on compare la variable stocké a l'addresse 0x8049810 a la valeur 0x1025544 qui vaut 16930116 
+
+on est dans le même cas que dans le level3 sauf qu'on passe par une fonction avant d'arriver au printf mais surtout on a une très grande valeur lors de la comparaison, donc on ne pourra pas entrer 16930116 char et utiliser %n car le buffer de fputs ne prend que 512 char
+
+comme tout a l'heure on va ecrire aaaaaaa et plein de %p en entrée du programme pour trouver a quelle argument on trouvera notre input
+
+on trouve que notre input se trouve a partir du 12eme %p
+
+on tente quand même la solution de l'exo 3, on sait jamais peut etre que 16930116 peuvent etre pris en compte
+
+en effet le buffer ne lit que 512 char donc cette solution ne marche passe
+
+mais on peut faire en sorte que printf ecrive quand même le bon nombre de char en lui demandant de mettre un padding a un int
+
+on ecrit donc `python -c 'print "\x10\x98\x04\x08" + "%16930112d" + "%12$n"' > /tmp/test3`
+
+et on l'envoie comme d'habitude au binaire avec
+`cat /tmp/test3 - | ./level4`
+et on reçoit directement le flag
+

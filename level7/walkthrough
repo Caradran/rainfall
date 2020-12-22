@@ -1,0 +1,34 @@
+en desassemblant le binaire on trouve qu'il contient une fonction main et une fonction m qui n'est jamais appelé
+
+la fonction m fait un appel a time puis puts
+
+on voit aussi dans info variables qu'il y a une variable global c dont l'addresse est 0x08049960
+
+cette variable est utilisé dans le main dans un appel a fgets mais n'est pas print dans le main
+on suppose que ce qui est ecrit dans cette variable est le flag que l'on cherche
+
+dans le main il y a 4 allocations de mémoire,  puis 2 appels a strcpy
+on va essayer de buffer overflow les strcpy. Le but est de changer l'addresse de destination du 2eme strcpy pour que ce soit celle de puts et de la remplacer par l'addresse de m
+
+l'addresse de puts contient 00 on va donc voir s'il y a un jump dans la fonction elle même dont on pourrait remplacer l'addresse
+
+on trouve l'addresse 0x8049928
+
+on va chercher a partir de combien de char on buffer overflow
+pour cela on va utliser https://wiremask.eu/tools/buffer-overflow-pattern-generator
+
+on ne peut pas tester sous gdb comme avant car c'est une fonction de la libc qui overflow, gdb ne va pas nous donner l'endroit ou ça overflow.
+On va donc utiliser ltrace pour voir ce qui se passe dans les fonctions
+
+on voit que l'overflow sur l'addresse de reception du 2eme strcpy se fait a partir du 20ème char
+
+comme dans un des exercices précedent vu qu'on doit envoyer l'input directement et pas dans un fichier, on va passer par une variable :
+a=`python -c 'print "aaaaaaaaaaaaaaaaaaaa\x28\x99\x04\x08"'`
+et comme l'addresse de m est 0x080484f4
+b=`python -c 'print "\xf4\x84\x04\x08"'`
+
+après ./level7 $a $b
+on obtient le flag recherché
+
+
+

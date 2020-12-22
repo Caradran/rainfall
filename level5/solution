@@ -1,0 +1,45 @@
+on trouve dans le home du level5 un binaire level5
+
+on desassemble le main
+on trouve qu'il fait appelle a la fonction n
+on desass la fonction n on voit qu'elle fait appelle a fgets puis a printf puis a exit
+donc comme avant on pourra exploiter printf en lui envoyant la string de format que l'on veut
+
+on regardant la liste des fonctions on voit qu'il y a aussi la fonction o
+on desass la fonction o et on voit qu'elle fait un appelle a systeme
+
+on va chercher a jump a la fonction o
+pour ça on va essayer de remplace la fonction exit par la fonction o
+
+l'adresse de la fonction o est 0x080484a4
+
+0x080484a4 vaut 134513828 en dec donc on mettera un paddinf de 134513824 lors de l'appelle a la fonction printf pour ecrire le bon nombre de char après l'adresse dans laquelle on veu faire l'injection
+
+exit se trouve a l'adresse 0x080484ff + 1 donc 0x08048500
+il faut donc remplace la valeur de l'adresse 0x08048500 par 0x080484a4
+
+on ne peut pas le faire comme avant car l'adresse contient 00 ce qui finit la string et donc rien ne passera par fgets
+
+peut etre qu'on peut changer une addresse dans l'execution d'exit ?
+on disass exit
+on voit qu'il fait un jump a *0x8049838
+
+
+comme pour les deux exercices d'avant on va chercher avec en argument du binaire 
+`aaaa %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p` a quel argument se trouve notre input
+
+on voit qu'il se trouve a partir du 4eme argument
+
+on peut modifier la valeur dans l'addresse dans le jump  pour que ce soit le call de la fonction o
+
+`python -c 'print "\x38\x98\x04\x08" + "%134513824d%4$n"' > /tmp/test4`
+
+puis `cat /tmp/test4 - | ./level5`
+
+enfin on fait `cat /home/user/level6/.pass`
+
+et on obitent le flag
+
+
+(bonus pour refaire le .c en faisant info varables dans gdb on voit qu'il y a une variable globale qui n'est jamais utilisé)
+

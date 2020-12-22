@@ -1,0 +1,37 @@
+on trouve dans le home du level1 un binaire level1
+
+en l'executant on voit qu'il lit un input en entrée standard mais ne fais rien qu'on y mette quelque chose ou pas
+
+on le passe sous gdb pour voir ce qu'il se passe
+en desassemblant le main on voit qu'il execute la fonction gets
+
+la fonction gets n'est pas secure, on peut lui faire executer une autre fonction grace a un buffer overflow
+
+on check quelles autres fonction il y a dans le binaire grace a `info functions`
+on voit qu'en plus du main il y a la fonction run qui est propre au programme
+
+on peut disass la fonction run pour voir ce qu'il s'y passe
+on voit que la fonction run fait appel a fwrite puis a systeme
+
+on suppose donc que c'est ici que sera lancer le shell avec les droits pour atteindre /home/user/level2/.pass
+on va donc faire overflow gets pour qu'il lance la fonction run
+pour ça il faut trouver la taille du buffer de la fonction gets
+dans le code en assembleur de gets on voit que 0x50 est alloué pour gets dont 0x10 pour la mémoire
+
+on va donc créer un fichier de 80 char avec a la fin l'addresse de run (en little endian) qui est 0x08048444
+
+`python -c'print "0" * 76 + "\x44\x84\x04\x08"'` > /tmp/lalala
+
+ensuite on va envoyer ce fichier en lecture a ./level1
+`cat "/tmp/lalala/" | ./level1`
+
+il va bien lancer la fonction gets mais va quitter directement
+il faut faire en sorte que la lecture ne s'arrete pas pour qu'on puisse envoyer des inputs au shell
+on fait ça grace a l'option -
+
+`cat "/tmp/lalala" - | ./level1`
+
+on ecrit ensuite `cat /home/user/level2/.pass`
+
+et on trouve le flag
+

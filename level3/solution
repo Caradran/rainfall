@@ -1,0 +1,26 @@
+on trouve au home du level3 un binaire level3
+en le desassemblant avec gdb on voit qu'il utilise fgets qui est la version plus secur de gets, oon ne pourra donc pas buffer overflow avec
+par contre il envoie ce qu'on lui donne en argument directement a printf
+
+on lui envoie donc un input et pleins de %p pour voir a quelle argument se trouve l'adresse de notre input dans la stack
+
+donc `./level3`
+`aaaaaaaa %p %p %p %p %p %p`
+on trouve que notre input se trouve dans le 4ème argument
+
+ensuite le programme va comparer ce qui se trouve dans l'adresse 0x804988c a 64
+et si la comparaison est bonne va utiliser systeme, surement pour lance le shell
+
+il faut donc qu'on arrive a mettre la valeur 64 dans l'adresse 0x804988c
+grace a l'option %n de printf on peut ecrire la taille de ce que l'on a écrit jusqu'a present dans l'argument que l'on veut (donc par exemple %3$n ecrira dans le 3eme argument) donc ici on utilisera %4$n pour ecrire dans l'adresse qu'on donnera en input
+il faut donc qu'on ecrive 64 char puis en commençant pas l'adresse 0x804988c et ensuite %4$n pour ecrire 64 dans l'adresse 0x804988c
+
+`python -c 'print "\x8c\x98\x04\x08" + "A" * 60 + "%4$n"' > /tmp/test2`
+puis
+`cat /tmp/test2 - | ./level3`
+puis
+`cat /home/user/level4/.pass`
+et on obtient le flag recherché
+
+
+

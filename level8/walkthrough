@@ -1,0 +1,69 @@
+dans le home du level8 on trouve un binaire
+
+on le desassemble avec gdb on voit qu'il ne contient qu'un main assez grand avec pleins d'appelles de fonction
+
+il contient aussi 2 variables globales auth dont l'addresse est 0x08049aac et service dont l'addresse est 0x08049ab0
+
+le programme est une boucle infinie qui commence par print les pointeurs contenue dans auth et service
+
+il a l'air d'être protégé contre les buffers overflow car il utilise fgets et non gets et il y a une verification de la taille avant l'appel a strcpy
+
+
+en effet en lançant le programme et en mettant ce qu'on veut en input on arrive pas a le faire buffer overflow
+le prgramme doit donc attendre un certain input
+
+on va print les valeurs contenue dans toutes las addresse qui sont mise dans eax avant une comparaison
+
+dans gdb :
+
+`x/s 0x8048819`
+la première dans l'addresse 0x8048819 vaut "auth "
+
+`x/s 0x804881f`
+la 2eme est "reset"
+
+`x/s 0x8048825`
+la 3eme est "service"
+
+`x/s 0x804882d`
+la 4eme est "login"
+
+on va essayer de comprendre en détaille se que fait le binaire
+
+tout d'abord il lance une boucle infinie, il y a un jmp au debut de la boucle a la fin du main qui se fait sans conditions
+0x08048727 <+451>:jmp    0x8048574 <main+16>
+
+dans cette boucle il commence par printf auth et service dans le format "%p, %p"
+
+il fait ensuite un appel a fgets ou il remplit un buffer de 128 bits avec stdin (dont l'addresse est 0x8049a80)
+il verifie le retour de fgets et sort de la boucle et return 0 si il est NULL
+
+il compare ensuite les 5 1er char de "auth " avec notre buffer 
+si ce sont les meme il malloc de 4 auth et lui donne 0 comme valeur initial
+on verifie ensuite que la string commençant au 5eme octet de notre buffer, soit buf[5] s'il est en char, est <= 30
+si c'est le cas on strcpy ce buffer dans auth
+ce strcpy est donc bien protégé et on ne peut pas buffer overflow avec
+mais par contre il permet d'écrire dans auth, tout les char après "auth " seront dans auth si on ne dépace pas 30 char
+
+il compare ensuie les 5 premiers chars du buf avec "reset" et free auth si la comparaison est bonne
+
+il compare ensuite les 6 premiers char de "service" (soit "servic") avec notre buf et si ce sont les memes
+il strdup ce qui se trouve après le 7eme octet de notre buffer soit buf[7] et donne l'addresse a service
+
+enfin il compare les 5 1er char de logine et ensuite si la valeur a 32 octets de auth est nulle il ecrit "Password:\n"
+si elle est non nul il execute "/bin/sh" avec system
+
+il faut donc qu'on essaye de mettre une valeur a 32 octets de auth, mais le strcpy et protégé
+
+on va donc input "auth " pour allouer un plage mémoire de 4 octets a auth  puis on va ecrire servic suivit d'une longue string de char pour allouer une plage mémoire a service
+normalement cette plage mémoire devrait se situer après celle de auth et lorce que l'on regardera ce qui se trouve a auth[32] on devrait retrouver un des char de la string que l'on aura alloué a service et donc le programme lancera le shell et on pourra aller trouver le flag
+
+donc : 
+`./level8`
+`auth `
+`serviceaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`
+`login`
+
+et on se retrouve sur le shell
+on fait cat /home/user/level9/.pass
+et on trouve le flag

@@ -1,0 +1,24 @@
+avec info function on voit qu'il y a 3 fonction dans le binaire, la fonction n, m et le main
+
+l'addresse de m est 0x08048468
+celle de n est 0x08048454
+
+la fonction m ecrit juste Nope avec puts
+la fonction n fait un appel a systeme, c'est surement elle qu'on veut lancer
+
+le main fait 2 malloc, un de 0x40 et un de 4
+
+il met l'addresse de m dans le malloc de 4
+puis copy argv[1] dans le malloc de 0x40
+
+mais il ne verifie pas la taille de l'input on peut donc faire un buffer overflow
+
+on utilise https://wiremask.eu/tools/buffer-overflow-pattern-generator/ pour trouver a partir de quel char on a un buffer overflow
+on trouve qu'il faut un offset de 72
+
+cette fois il faut mettre le string directement en argument et non dans un fichier qu'on pourra pipe
+
+donc on va proceder ainsi :
+`a=`python -c 'print "A"*72 + "\x54\x84\x04\x08"'``
+puis `./level6 $a`
+et on trouve le flag
